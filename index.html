@@ -53,7 +53,6 @@
         .payout-box { background: #f5f3ff; border: 2px solid var(--premium); padding: 20px; border-radius: 8px; margin-top: 25px; display: none; text-align: left; animation: fadeIn 0.4s ease; }
         .payout-box input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; width: 220px; margin-top: 8px; margin-right: 10px; font-size: 15px; }
         
-        /* Admin CRUD Section Style */
         .admin-section { margin-top: 40px; padding: 20px; border: 2px solid #f59e0b; border-radius: 8px; background: #fffdf5; }
         .admin-section h3 { color: #d97706; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .admin-textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #f59e0b; border-radius: 4px; margin-bottom: 10px; resize: none; }
@@ -84,7 +83,7 @@
         <div class="stat-card"><h3>সঠিকতা (Accuracy)</h3><p id="accuracy">100%</p></div>
     </div>
 
-    <div id="text-to-type">로드 হচ্ছে...</div>
+    <div id="text-to-type">লোড হচ্ছে...</div>
     <textarea id="typing-input" placeholder="পরীক্ষা শুরু করতে নিচের বাটনে ক্লিক করুন..." disabled></textarea>
 
     <div class="controls">
@@ -99,9 +98,9 @@
         <button class="btn btn-success" id="start-btn" onclick="startTest()">পরীক্ষা শুরু করুন</button>
     </div>
 
-    <!-- Payout Information (ডাইনামিক পেমেন্ট গেটওয়ে) -->
+    <!-- Payout Information -->
     <div class="payout-box" id="payout-box">
-        <h4 style="color: var(--premium);">🚀 প্রিমিয়াম পাস অ্যাক্টিভেট করুন</h4>
+        <h4 style="color: var(--premium);">🚀 প্রিমিয়াম পাস্যাক্টিভেট করুন</h4>
         <p style="font-size: 14px; margin: 8px 0; line-height: 1.5;">আমাদের বিকাশ বা নগদ পার্সোনাল নম্বরে <b>১০০ টাকা</b> সেন্ড মানি (Send Money) করুন। এরপর নিচে আপনার ট্রানজেকশন আইডি (TxID) সাবমিট করুন। অ্যাডমিন ভেরিফাই করার ৫ মিনিটের মধ্যে অ্যাকাউন্ট প্রিমিয়াম হয়ে যাবে।</p>
         <p style="font-size: 15px; margin-bottom: 10px;">📱 <b>বিকাশ / নগদ (Personal):</b> <span style="color:var(--premium); font-weight:bold; font-size:17px;">01722243656</span></p>
         <input type="text" id="txid-input" placeholder="TrxID দিন (যেমন: BKB7X892)">
@@ -145,28 +144,29 @@
 
 <script>
     const SUPABASE_URL = "https://cqnnbwdkysztchcgsvob.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_ZrZAEXpeA434K3aqO8zZ-A_ke7lHTZ7";
+    const SUPABASE_KEY = "sb_publishable_ZrZAEXpeA434K3aqO8zZ-A_ke7lHTZ7"; 
 
     let supabase = null;
     try {
         if (typeof window.supabase !== 'undefined') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } else {
-            console.error("Supabase CDN লোড হয়নি!");
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                auth: { persistSession: true, autoRefreshToken: true }
+            });
         }
     } catch (e) {
         console.error("Supabase ক্লায়েন্ট তৈরি করতে সমস্যা:", e);
     }
     
-    // আপনার লোকাল বা আর্কাইভের প্রশ্ন ব্যাংক
     let passages = {
         en: "The quick brown fox jumps over the lazy dog. Regular typing practice improves muscle memory and speed.",
         bn_uni: "বাংলাদেশ আমাদের অহংকার। সরকারি চাকরিতে টাইপিং পরীক্ষা একটি অত্যন্ত গুরুত্বপূর্ণ ধাপ। নিয়মিত চর্চায় সাফল্য আসে।"
     };
 
     let timerLeft = 60, timerInterval = null, isTesting = false, currentUser = null, isPremium = false, dailyTestsCount = 0;
+    let selectedPlanType = 'free'; 
 
     function selectPlan(planType) {
+        selectedPlanType = planType;
         document.getElementById('plan-free').classList.remove('selected');
         document.getElementById('plan-premium').classList.remove('selected');
         const payoutBox = document.getElementById('payout-box');
@@ -180,15 +180,12 @@
         }
     }
 
-    // আর্কাইভ এডিট করার ফাংশন
     function saveEditedPassage() {
         const lang = document.getElementById('lang-select').value;
         const newText = document.getElementById('admin-text-edit').value;
-        
-        if(!newText.trim()) { alert("দয়া করে খালি রাখবেন না, কিছু টাইপ করুন!"); return; }
-        
-        passages[lang] = newText; // প্রশ্ন আপডেট হলো
-        document.getElementById('text-to-type').innerText = newText; // স্ক্রিনে লাইভ পরিবর্তন হলো
+        if(!newText.trim()) { alert("দয়া করে খালি রাখবেন না!"); return; }
+        passages[lang] = newText;
+        document.getElementById('text-to-type').innerText = newText;
         alert("আর্কাইভের প্রশ্নটি সফলভাবে এডিট ও আপডেট করা হয়েছে! 🚀");
     }
 
@@ -208,49 +205,49 @@
                 document.getElementById('typing-input').disabled = false;
                 
                 if(isPremium) {
-                    document.getElementById('plan-premium').classList.add('selected');
+                    selectPlan('premium');
                     document.getElementById('payout-box').style.display = "none";
                 } else {
-                    document.getElementById('plan-free').classList.add('selected');
+                    selectPlan('free');
                 }
                 
                 await getDailyCount();
                 loadHistory();
             }
         } catch (err) {
-            console.log("কোনো অ্যাক্টিভ সেশন নেই।");
-            document.getElementById('plan-free').classList.add('selected');
+            console.log("সেশন চেক কমপ্লিট।");
+            if(selectedPlanType === 'premium') {
+                document.getElementById('plan-premium').classList.add('selected');
+            } else {
+                document.getElementById('plan-free').classList.add('selected');
+            }
         }
     }
 
     async function getDailyCount() {
         if(!currentUser || !supabase) return;
         const today = new Date().toISOString().split('T')[0];
-        const { count } = await supabase.from('typing_history')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', currentUser.id)
-            .gte('created_at', today);
-            
+        const { count } = await supabase.from('typing_history').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).gte('created_at', today);
         dailyTestsCount = count || 0;
         document.getElementById('test-limit').innerText = isPremium ? "আনলিমিটেড" : `${dailyTestsCount}/২`;
     }
 
     async function handleSignUp() {
-        if(!supabase) return alert("সিস্টেম লোড হতে পারেনি!");
+        if(!supabase) return alert("সিস্টেম রেডি না!");
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-pass').value;
-        if(!email || !password) return alert("ইমেইল এবং পাসওয়ার্ড দুটিই দিন!");
+        if(!email || !password) return alert("সব ঘর পূরণ করুন!");
 
         const { error } = await supabase.auth.signUp({ email, password });
         if(error) alert("সাইন-আপ ত্রুটি: " + error.message);
-        else alert("রেজিস্ট্রেশন সফল! দয়া করে এবার লগইন বাটনে ক্লিক করুন।");
+        else alert("রেজিস্ট্রেশন সফল! এবার লগইন করুন।");
     }
 
     async function handleLogin() {
-        if(!supabase) return alert("সিস্টেম লোড হতে পারেনি!");
+        if(!supabase) return alert("সিস্টেম রেডি না!");
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-pass').value;
-        if(!email || !password) return alert("ইমেইল এবং পাসওয়ার্ড দিন!");
+        if(!email || !password) return alert("ইমেইল ও পাসওয়ার্ড দিন!");
 
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if(error) alert("লগইন ব্যর্থ: " + error.message);
@@ -262,25 +259,18 @@
     function loadPassage() { 
         const lang = document.getElementById('lang-select').value; 
         document.getElementById('text-to-type').innerText = passages[lang];
-        document.getElementById('admin-text-edit').value = passages[lang]; // এডিট বক্সে প্রশ্ন লোড করা
+        document.getElementById('admin-text-edit').value = passages[lang];
     }
 
     function startTest() {
-        if(!currentUser) { alert("পরীক্ষা দিতে প্রথমে একটি অ্যাকাউন্ট তৈরি করে লগইন করুন!"); return; }
-        if(!isPremium && dailyTestsCount >= 2) {
-            alert("আপনার আজকের ফ্রি ২টি পরীক্ষার লিমিট শেষ! আনলিমিটেড পরীক্ষা দিতে প্রিমিয়াম পাস অ্যাক্টিভেট করুন।");
-            return;
-        }
+        if(!currentUser) { alert("প্রথমে লগইন করুন!"); return; }
+        if(!isPremium && dailyTestsCount >= 2) { alert("আজকের ফ্রি লিমিট শেষ!"); return; }
         if(isTesting) return;
         isTesting = true;
         timerLeft = parseInt(document.getElementById('time-select').value);
         document.getElementById('typing-input').value = "";
         document.getElementById('typing-input').focus();
-        
-        timerInterval = setInterval(() => {
-            timerLeft--;
-            if(timerLeft <= 0) endTest();
-        }, 1000);
+        timerInterval = setInterval(() => { timerLeft--; if(timerLeft <= 0) endTest(); }, 1000);
     }
 
     function calculateStats() {
@@ -303,30 +293,19 @@
         const wpm = document.getElementById('wpm').innerText;
         const accuracy = document.getElementById('accuracy').innerText;
         const lang = document.getElementById('lang-select').value;
-
         if(currentUser && supabase) {
-            await supabase.from('typing_history').insert([
-                { user_id: currentUser.id, wpm: parseInt(wpm), accuracy: accuracy, language: lang }
-            ]);
+            await supabase.from('typing_history').insert([{ user_id: currentUser.id, wpm: parseInt(wpm), accuracy: accuracy, language: lang }]);
             location.reload();
         }
     }
 
     async function submitPayment() {
-        if(!currentUser) { alert("পেমেন্ট সাবমিট করতে প্রথমে লগইন করুন!"); return; }
+        if(!currentUser) { alert("প্রথমে লগইন করুন!"); return; }
         const txid = document.getElementById('txid-input').value;
-        if(!txid) { alert("দয়া করে TrxID দিন!"); return; }
-        
-        const { error } = await supabase.from('payments').insert([
-            { user_id: currentUser.id, email: currentUser.email, trxid: txid, status: 'pending' }
-        ]);
-        
-        if(!error) {
-            alert("আপনার TrxID সফলভাবে জমা হয়েছে। অ্যাডমিন ভেরিফাই করার পর আপনার অ্যাকাউন্ট প্রিমিয়াম হয়ে যাবে। ধন্যবাদ!");
-            document.getElementById('txid-input').value = "";
-        } else {
-            alert("ত্রুটি হয়েছে, আবার চেষ্টা করুন।");
-        }
+        if(!txid) { alert("TrxID দিন"); return; }
+        const { error } = await supabase.from('payments').insert([{ user_id: currentUser.id, email: currentUser.email, trxid: txid, status: 'pending' }]);
+        if(!error) { alert("TrxID সফলভাবে জমা হয়েছে!"); document.getElementById('txid-input').value = ""; } 
+        else { alert("ত্রুটি হয়েছে, আবার চেষ্টা করুন।"); }
     }
 
     async function loadHistory() {
@@ -335,9 +314,7 @@
         const { data } = await supabase.from('typing_history').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
         if(data) {
             let rows = "";
-            data.forEach(row => {
-                rows += `<tr><td>${new Date(row.created_at).toLocaleDateString()}</td><td>${row.language}</td><td><b>${row.wpm}</b></td><td>${row.accuracy}</td></tr>`;
-            });
+            data.forEach(row => { rows += `<tr><td>${new Date(row.created_at).toLocaleDateString()}</td><td>${row.language}</td><td><b>${row.wpm}</b></td><td>${row.accuracy}</td></tr>`; });
             document.getElementById('history-rows').innerHTML = rows;
         }
     }
