@@ -220,22 +220,35 @@ loginBtn.style.backgroundColor = "#6c757d";
 }
 });
 
+// ১. পেজ লোড হওয়ার সাথে সাথে প্রথমে ডিফল্ট ডেটা দেখাবে, তারপর ব্যাকগ্রাউন্ডে ক্লাউড থেকে ডেটা আনবে
 window.onload = function() {
-fetchPassagesFromCloud();
+    populatePassagePicker(); // কোনো বিলম্ব ছাড়াই সাথে সাথে স্ক্রিন ও ড্রপডাউন চালু করার জন্য
+    fetchPassagesFromCloud(); // ব্যাকগ্রাউন্ডে ক্লাউড থেকে ডেটা আনা শুরু হবে
 };
 
-// 🌐 ডাটাবেজ থেকে প্যাসেজ লোড করা
+// ২. ক্লাউড থেকে ডেটা লোড করার দ্রুত ও উন্নত ফাংশন
 async function fetchPassagesFromCloud() {
-try {
-const { data, error } = await supabase.from('passages').select('*').order('created_at', { ascending: true });
-if (error) throw error;
-dbPassages = data || [];
-} catch(e) {
-console.error("Cloud fetch failed, using fallback.", e);
-dbPassages = [];
+    try {
+        const { data, error } = await supabase
+            .from('passages')
+            .select('*')
+            .order('created_at', { ascending: true });
+            
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+            dbPassages = data;
+            populatePassagePicker(); // ব্যাকগ্রাউন্ডে ডেটা আসার পর ড্রপডাউনটি রিফ্রেশ হবে
+        }
+    } catch(e) {
+        console.error("Cloud fetch failed or delayed, running smoothly on fallback data.", e);
+    }
 }
-populatePassagePicker();
-}
+  
+  {
+fetchPassagesFromCloud();
+async function const { data, error } = await supabase.from('passages').select('*').order('created_at', { ascending: true if (error| [];
+console.error("Cloud fetch failed, using fallback.", e
 
 function getFilteredPassages(font) {
 let list = dbPassages.filter(p => p.font_type === font);
